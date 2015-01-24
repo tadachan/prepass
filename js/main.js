@@ -1,5 +1,148 @@
+	//データ保存用配列
+	var ShopData = [];
+
+	//フィールド名の設定
+	//企業ID,店舗ID,店舗・施設名,郵便,住所１２３,住所４,緯度,経度,電話,FAX,URL,営業・利用可能時間,定休日,プレパス特典（協賛店のみ）,,,,,
+	var Fields = ["co_id","sp_id","sp_name","zip_no","zip_main","zip_sub","lat","lng","tel","fax","url","open_time","holidy","special"];
+
+
 $(function(){
-    initlaize();
+
+        var mapOpts;
+        var mapCanvas;
+	var mapLat = "36.57157640349429";
+	var mapLng = "136.65492863021274";
+
+	getLocation2();	//mapLat mapLng　セット
+    	mapInit();
+
+	function mapInit(){
+        	var latlng = new google.maps.LatLng(mapLat, mapLng);
+        	mapOpts = {
+            		zoom: 16,
+			center: latlng,
+			mapTypeId: google.maps.MapTypeId.ROADMAP
+        	};
+        	mapCanvas = new google.maps.Map(document.getElementById("map_canvas"), mapOpts);
+    	}
+
+
+	//csvデータの配列への読み込み
+	csvToArray('data/prepath.csv', function(data){
+		ShopData = [];
+        	for (i in data){
+               		if (i == 0) {
+                		continue;
+               		}
+                		ShopData.push(data[i]);
+            	}
+       	});
+
+	//search_bt onClick 
+	$("#search_bt").click(function(){
+        	search_exec();
+        });
+     	
+	function callFieldNo(fname){
+		for(var i=0 ; i < Fields.length ; i++){
+			if(Fields[i] == fname){
+				return i;
+				break;
+			}
+		}
+		return false;
+	}
+
+	function getLocation2() {
+        	if (navigator.geolocation) {
+           		navigator.geolocation.getCurrentPosition(successCallback2,errorCallback)
+        	} else {
+            		errorCallback();
+        	}
+    	}
+
+   	function successCallback2(pos) {
+        	var lat = pos.coords.latitude;
+        	var lng = pos.coords.longitude;
+        	$('#loading').hide();
+        	//showGoogleMap(lat, lng);
+
+		mapLat = lat;
+		mapLng = lng;
+    	}
+
+/*
+    	function mapSetCenter(initLat, initLng) {
+        	var latlng = new google.maps.LatLng(initLat, initLng);
+        	var opts = {
+            		zoom: 16,
+			center: latlng,
+			mapTypeId: google.maps.MapTypeId.ROADMAP
+        	};
+        	var map = new google.maps.Map(document.getElementById("map_canvas"), opts);
+
+        	pushPins(map);
+    	}
+*/
+
+	function search_exec(){
+		//現在地の取得
+		//navigator.geolocation.getCurrentPosition(successCallback2,errorCallback);
+
+		var keyword = document.getElementById("search_txt").value;
+		//var emt     = document.getElementById("search");
+
+		var sname = "sp_name";
+		var fno   = callFieldNo(sname);
+		
+		var flg = 0;
+		var lat = 0, lng =0;
+		for(var i =0 ; i < ShopData.length ; i++){
+			if(ShopData[i][fno].indexOf(keyword)!=-1){
+				//alert(ShopData[i][fno]);
+				//pushPin(map_name, ShopData[i]);
+				lat = ShopData[i][callFieldNo("lat")];
+				lng = ShopData[i][callFieldNo("lng")];
+
+        			//showGoogleMap(lat, lng);
+				pushPin2(mapCanvas , lat,lng);
+
+				flg++;
+			};
+		}
+		if(flg == 0){
+			alert("データが見つかりませんでした");
+		}else{
+			alert(flg + "件のデータがありました");
+		}
+	}
+
+   	function pushPin2(map ,lat,lng) {
+
+        	//現在地のピン
+        	//var lat = data[i][6];
+        	//var lng = data[i][7];
+        	var latlng = new google.maps.LatLng(lat, lng);
+        	var marker = new google.maps.Marker({
+           		 position:latlng,
+            		map: map
+        	});
+
+        	google.maps.event.addListener(marker, 'click', function() {
+           		var infowindow = new google.maps.InfoWindow({
+                  		content: 'click',
+                  		position: marker.getPosition(),
+            		});
+            		infowindow.open(map);
+        	});
+
+		marker.setMap(map);
+   	}
+
+	//*************
+
+    //initlaize();
+
     function initlaize() {
         getLocation();
     }
@@ -90,6 +233,7 @@ mapTypeId: google.maps.MapTypeId.ROADMAP
             if (line[i].length == 0) continue;
 
             var row = line[i].split(",");
+
             ret.push(row);
         }
         callback(ret);
