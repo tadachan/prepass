@@ -10,11 +10,25 @@ $(function(){
 
         var mapOpts;
         var mapCanvas;
-	var mapLat = "36.57157640349429";
+	var mapLat = "36.57157640349429";	//itp武蔵
 	var mapLng = "136.65492863021274";
 
-	getLocation2();	//mapLat mapLng　セット
-    	mapInit();
+	var markersArray = [];
+
+ 	//csvデータの配列への読み込み
+	csvToArray('data/prepath.csv', function(data){
+		ShopData = [];
+        	for (i in data){
+               		if (i == 0) {
+                		continue;
+               		}
+                		ShopData.push(data[i]);
+            	}
+       	});
+
+	getLocation2();	//mapLat mapLng　に現在地をセットする
+			//しかし、取得のタイミングが遅く、初期地図表示に間に合わない
+   	mapInit();
 
 	function mapInit(){
         	var latlng = new google.maps.LatLng(mapLat, mapLng);
@@ -26,22 +40,27 @@ $(function(){
         	mapCanvas = new google.maps.Map(document.getElementById("map_canvas"), mapOpts);
     	}
 
-
-	//csvデータの配列への読み込み
-	csvToArray('data/prepath.csv', function(data){
-		ShopData = [];
-        	for (i in data){
-               		if (i == 0) {
-                		continue;
-               		}
-                		ShopData.push(data[i]);
-            	}
-       	});
+	//マップの中心地を現在地に移動（暫定対策）
+	function mapCenter(){
+		var center = new google.maps.LatLng(mapLat,mapLng);
+		mapCanvas.setCenter(center);
+	}
 
 	//search_bt onClick 
 	$("#search_bt").click(function(){
-        	search_exec();
+		//暫定対策
+		mapCenter();
+		
+	       	search_exec();
         });
+	//clear_br onClick
+	$("#clear_bt").click(function(){
+		for(var i=0 ; i < markersArray.length ; i++){
+        		markersArray[i].setMap(null);
+		}
+		markersArray = [];
+        });
+
      	
 	function callFieldNo(fname){
 		for(var i=0 ; i < Fields.length ; i++){
@@ -71,41 +90,27 @@ $(function(){
 		mapLng = lng;
     	}
 
-/*
-    	function mapSetCenter(initLat, initLng) {
-        	var latlng = new google.maps.LatLng(initLat, initLng);
-        	var opts = {
-            		zoom: 16,
-			center: latlng,
-			mapTypeId: google.maps.MapTypeId.ROADMAP
-        	};
-        	var map = new google.maps.Map(document.getElementById("map_canvas"), opts);
-
-        	pushPins(map);
-    	}
-*/
-
 	function search_exec(){
 		//現在地の取得
 		//navigator.geolocation.getCurrentPosition(successCallback2,errorCallback);
 
 		var keyword = document.getElementById("search_txt").value;
-		//var emt     = document.getElementById("search");
+		if(keyword == ""){
+			alert("キーワードを入力してください");
+			return false;
+		}
 
-		var sname = "sp_name";
+		var sname = $('[name=search]').val();
+
+		//var sname = "sp_name";
 		var fno   = callFieldNo(sname);
 		
 		var flg = 0;
 		var lat = 0, lng =0;
 		for(var i =0 ; i < ShopData.length ; i++){
 			if(ShopData[i][fno].indexOf(keyword)!=-1){
-				//alert(ShopData[i][fno]);
-				//pushPin(map_name, ShopData[i]);
-				lat = ShopData[i][callFieldNo("lat")];
-				lng = ShopData[i][callFieldNo("lng")];
 
-        			//showGoogleMap(lat, lng);
-				pushPin2(mapCanvas , lat,lng);
+				pushPin2(mapCanvas , ShopData[i]);
 
 				flg++;
 			};
@@ -117,26 +122,40 @@ $(function(){
 		}
 	}
 
-   	function pushPin2(map ,lat,lng) {
+   	function pushPin2(map ,data) {
 
         	//現在地のピン
-        	//var lat = data[i][6];
-        	//var lng = data[i][7];
+        	var lat = data[callFieldNo("lat")];
+        	var lng = data[callFieldNo("lng")];
         	var latlng = new google.maps.LatLng(lat, lng);
         	var marker = new google.maps.Marker({
-           		 position:latlng,
-            		map: map
+           		position:latlng,
+			icon : "icon/red_pin0.png",
+			map: map
         	});
+
+		var buff = "<div style='width:150px;'>";
+		buff += data[callFieldNo("sp_name")];
+		buff += "<br />" + data[callFieldNo("tel")];
+		buff += "<br />" + data[callFieldNo("special")];
+
+		var url = data[callFieldNo("url")];
+		if(url != ""){
+			buff += "<br />" + "<a href='" + url + "' target='_blank' >ホームページ</a>";
+		}
+		buff += "</div>";
 
         	google.maps.event.addListener(marker, 'click', function() {
            		var infowindow = new google.maps.InfoWindow({
-                  		content: 'click',
+                  		content: buff,
                   		position: marker.getPosition(),
             		});
-            		infowindow.open(map);
+            		infowindow.open(map,marker);
         	});
 
 		marker.setMap(map);
+
+		markersArray.push(marker);
    	}
 
 	//*************

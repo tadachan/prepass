@@ -13,12 +13,13 @@
     <body>
         <div id="loading" style="font-color:#ffffff">Now Loading....</div>
 	<div id="search">
-		<!--select id="search">
-			<option value="sp_name" checked>店舗・施設名</option>
-			<option value="special">プレパス特典</option>
-		</select-->
+		<select name="search" id="search">
+			<option value="special" checked>プレパス特典</option>
+			<option value="sp_name">店舗・施設名</option>
+		</select>
 		<input type="text" id="search_txt" value="" size="20" />
 		<input type="button" id="search_bt" value="検索" />
+		<input type="button" id="clear_bt" value="クリア" />
 	</div>
         <div id="map_canvas" style="width:640px; height:600px"></div>
     </body>
