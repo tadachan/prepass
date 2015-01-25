@@ -125,15 +125,18 @@ $(function(){
 			return false;
 		}
 
-		var sname = $('[name=search]').val();
+		//var sname = $('[name=search]').val();
 
-		//var sname = "sp_name";
-		var fno   = callFieldNo(sname);
+		//店舗と特典のフィールドを or で検索
+		var sname = "sp_name";
+		var fno1   = callFieldNo(sname);
+		var sname = "special";
+		var fno2   = callFieldNo(sname);
 		
 		var flg = 0;
 		var lat = 0, lng =0;
 		for(var i =0 ; i < ShopData.length ; i++){
-			if(ShopData[i][fno].indexOf(keyword)!=-1){
+			if(ShopData[i][fno1].indexOf(keyword)!=-1 || ShopData[i][fno2].indexOf(keyword)!=-1){
 
 				pushPin2(mapCanvas , ShopData[i]);
 
