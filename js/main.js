@@ -10,8 +10,16 @@ $(function(){
 
         var mapOpts;
         var mapCanvas;
-	var mapLat = "36.57157640349429";	//itp武蔵
-	var mapLng = "136.65492863021274";
+
+	//36.594702060135035,136.62559032440186
+	var mapLat = "36.594702060135035";	//石川県庁
+	var mapLng = "136.62559032440186";	//現在地が取得できない場合
+	var mapZoom = 14;
+
+	//36.87522650673951,136.86767578125
+	var defLat  = "36.87522650673951";	//石川県全体見渡せる位置
+	var defLng  = "136.86767578125";
+	var defZoom = 8;
 
 	var markersArray = [];
 
@@ -31,9 +39,9 @@ $(function(){
    	mapInit();
 
 	function mapInit(){
-        	var latlng = new google.maps.LatLng(mapLat, mapLng);
+        	var latlng = new google.maps.LatLng(defLat, defLng);
         	mapOpts = {
-            		zoom: 16,
+            		zoom: defZoom,
 			center: latlng,
 			mapTypeId: google.maps.MapTypeId.ROADMAP
         	};
@@ -43,14 +51,23 @@ $(function(){
 	//マップの中心地を現在地に移動（暫定対策）
 	function mapCenter(){
 		var center = new google.maps.LatLng(mapLat,mapLng);
+		var zoom = mapZoom;
+
 		mapCanvas.setCenter(center);
+		mapCanvas.setZoom(zoom);
+	}
+
+	//マップの中心地を初期化
+	function mapClear(){
+		var center = new google.maps.LatLng(defLat,defLng);
+		var zoom = defZoom;
+
+		mapCanvas.setCenter(center);
+		mapCanvas.setZoom(zoom);
 	}
 
 	//search_bt onClick 
-	$("#search_bt").click(function(){
-		//暫定対策
-		mapCenter();
-		
+	$("#search_bt").click(function(){		
 	       	search_exec();
         });
 	//clear_br onClick
@@ -59,7 +76,15 @@ $(function(){
         		markersArray[i].setMap(null);
 		}
 		markersArray = [];
+
+		//マップ初期化
+		mapClear();
         });
+	//place_bt onClick
+	$("#place_bt").click(function(){
+		//現在地へ
+		mapCenter();
+        });	
 
      	
 	function callFieldNo(fname){
@@ -204,7 +229,8 @@ mapTypeId: google.maps.MapTypeId.ROADMAP
     }
 
     function errorCallback() {
-        alert("cannot get location");
+        //alert("cannot get location");
+	$("#loading").html("現在地が取得できませんでした");
     }
 
     function pushPins(map)
